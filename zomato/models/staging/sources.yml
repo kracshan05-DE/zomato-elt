@@ -1,0 +1,21 @@
+version: 2
+
+sources:
+  - name: raw
+    database: ZOMATO
+    schema: RAW
+    tables:
+      - name: restaurants
+        description: "Restaurant dimension. All columns loaded as TEXT — messy source data (ratings like '--', costs like '₹ 200')."
+      - name: users
+        description: "Customer dimension. All columns loaded as TEXT."
+      - name: food
+        description: "Food item lookup. All columns loaded as TEXT."
+      - name: menu
+        description: "Restaurant-to-food-item menu with price. All columns loaded as TEXT."
+      - name: orders
+        description: "Order-level fact. Loaded with proper types (NUMBER/DATE/TIMESTAMP) at ingestion."
+      - name: order_items
+        description: "Order line-item fact. Loaded with proper types."
+      - name: reviews
+        description: "Customer reviews. Loaded with proper types; comment is free text for the AI enrichment layer."

@@ -1,0 +1,32 @@
+name: 'zomato'
+version: '1.0.0'
+config-version: 2
+
+profile: 'zomato'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  zomato:
+    staging:
+      +materialized: view
+      +schema: STAGING
+    marts:
+      +materialized: table
+      +schema: MARTS
+    marts_ai:
+      +materialized: table
+      +schema: AI
+      +tags: ['ai']
+
+snapshots:
+  zomato:
+    +target_schema: SNAPSHOTS

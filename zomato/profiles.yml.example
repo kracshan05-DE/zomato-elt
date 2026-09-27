@@ -1,0 +1,24 @@
+# Copy this to ~/.dbt/profiles.yml in Codespaces and fill in your own values.
+# Uses RSA key-pair auth (no password ever stored or typed into dbt) — the
+# key pair and Snowflake service user (dbt_svc_user / DBT_ROLE) should
+# already exist from snowflake/01_setup.sql.
+#
+# Generate your own key pair (run once, in Codespaces or locally):
+#   openssl genrsa -out ~/.ssh/rsa_key.pem 2048
+#   openssl rsa -in ~/.ssh/rsa_key.pem -pubout -out ~/.ssh/rsa_key.pub
+# Then paste the PUBLIC key body into snowflake/01_setup.sql's
+# RSA_PUBLIC_KEY and re-run that ALTER/CREATE USER statement.
+
+zomato:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: <your_account_identifier>      # e.g. hfauscm-nw43607
+      user: dbt_svc_user
+      private_key_path: /home/codespace/.ssh/rsa_key.pem
+      role: DBT_ROLE
+      warehouse: ZOMATO_WH
+      database: ZOMATO
+      schema: STAGING
+      threads: 4
