@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: fct_review_enriched
+    columns:
+      - name: review_id
+        data_tests: [unique, not_null]
+      - name: sentiment
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['positive', 'neutral', 'negative']
+      - name: topic
+        data_tests:
+          - not_null

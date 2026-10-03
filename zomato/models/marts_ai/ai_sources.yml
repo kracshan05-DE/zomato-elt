@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: ai
+    database: ZOMATO
+    schema: AI
+    tables:
+      - name: comment_enrichment
+        description: "Lookup written by ai/enrich_reviews.py (outside dbt): one row per distinct review comment, with LLM-assigned sentiment and topic."

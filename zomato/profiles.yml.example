@@ -14,9 +14,9 @@ zomato:
   outputs:
     dev:
       type: snowflake
-      account: <your_account_identifier>      # e.g. hfauscm-nw43607
+      account: <your_account_identifier>      # e.g. myorg-myaccount
       user: dbt_svc_user
-      private_key_path: /home/codespace/.ssh/rsa_key.pem
+      private_key_path: /home/<your-user>/.ssh/rsa_key.pem
       role: DBT_ROLE
       warehouse: ZOMATO_WH
       database: ZOMATO
