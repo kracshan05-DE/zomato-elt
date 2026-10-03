@@ -8,7 +8,7 @@ the learning was.
 It follows the architecture of
 [this DataVidhya tutorial](https://youtu.be/kYwaNMQ3XT8). The code is my own: I
 wrote it against my own accounts and checked it against the real data.
-The AWS Glue and Athena parts, and the LLM step, go beyond the tutorial.
+The Airflow DAG and the LLM step go beyond the tutorial.
 
 ## Architecture (as built)
 
@@ -43,7 +43,7 @@ Airflow runs the dbt build as a DAG: dbt_debug, then dbt_build.
 | Airflow 3.1 DAG (`dbt_debug` then `dbt_build`) | Ran for real, success |
 | LLM enrichment of review comments, and the dbt model that joins it | Ran for real |
 | `ai/ask.py` (plain-English question to SQL) | Written and unit-tested only. Never run against a live Snowflake, because my trial ended first |
-| AWS Glue and Athena | Planned, not built yet |
+| AWS Glue and Athena | Not built. Both bill per use and this is a zero-budget learning project, so I left them out on purpose |
 | RAG chat | Dropped on purpose. The reviews are only 294 distinct one-line comments, so there is nothing to retrieve that a GROUP BY does not already answer |
 
 Real numbers and outputs are in [`docs/RUN_LOG.md`](docs/RUN_LOG.md).
