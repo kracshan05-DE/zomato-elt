@@ -157,4 +157,4 @@ and untested fixes would be new unverified claims.
 ---
 
 Racshan Chandrakumar, Data Engineer.
-[LinkedIn](https://linkedin.com/in/racshan-chandrakumar)
+[LinkedIn](https://www.linkedin.com/in/racshan-chandrakumar-1b048721b/?isSelfProfile=true)
