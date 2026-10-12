@@ -30,9 +30,12 @@ from enrich_reviews import MODEL, snowflake_connection
 
 MAX_ROWS = 50
 
-# Only these tables and columns are described to the LLM. What the model is not
-# told about (for example customer emails and incomes) it cannot query, so
-# describing the schema is also a simple form of access control.
+# Only these tables and columns are described to the LLM, so it usually writes
+# queries against them alone. This is NOT access control: a user can still ask
+# for a column that is not listed (for example customer emails), and the model
+# may write that query. Real protection needs a read-only Snowflake role that
+# can only see approved views, plus masking on personal columns. This script
+# currently connects with the dbt role, which can read and write everything.
 SCHEMA = """
 Table ZOMATO.AI.FCT_REVIEW_ENRICHED  (one row per customer review, 300,000 rows)
   review_id, order_id, customer_id, restaurant_id, restaurant_city,

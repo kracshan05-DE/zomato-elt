@@ -2,11 +2,17 @@
 --
 -- Why incremental instead of a full table rebuild: this fact has 10M rows.
 -- Rebuilding it from scratch on every dbt run means re-scanning and
--- re-writing all 10M rows even when only a few thousand new orders arrived
--- since yesterday. Incremental + merge means each run only processes rows
--- newer than what's already in the table, and MERGE handles both new
--- inserts and late-arriving updates to existing orders (e.g. a status
--- change from Delivered to Refunded after the fact was first loaded).
+-- re-writing all 10M rows even when only a few thousand new orders arrived.
+-- Incremental + merge means each run only processes orders newer than the
+-- latest order_timestamp already in the table.
+--
+-- Known limitation: the filter selects by order_timestamp, which never
+-- changes. So a later update to an old order (e.g. Delivered -> Refunded)
+-- is never picked up, even though MERGE could apply it. Fixing that needs a
+-- column that changes when the row changes (an updated_at or a load
+-- timestamp), or a lookback window. The source data has neither.
+-- The filter also uses '>' where '>=' is safer (rows sharing the max
+-- timestamp that arrive later would be skipped; merge would dedupe '>=').
 {{
     config(
         materialized = 'incremental',

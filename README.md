@@ -38,11 +38,11 @@ Airflow runs the dbt build as a DAG: dbt_debug, then dbt_build.
 
 | Part | Status |
 |---|---|
-| S3 and IAM storage integration, RAW load | Ran for real |
+| S3 and IAM storage integration, RAW load | Ran for real. The load SQL (RAW `CREATE TABLE` and `COPY INTO`) was run in Snowsight and not saved, so it is not in this repo |
 | dbt: 17 models, 1 snapshot, 28 tests. The core build passed 40/40 on a 10M + 23M row load | Ran for real, twice |
 | Airflow 3.1 DAG (`dbt_debug` then `dbt_build`) | Ran for real, success |
 | LLM enrichment of review comments, and the dbt model that joins it | Ran for real |
-| `ai/ask.py` (plain-English question to SQL) | Written and unit-tested only. Never run against a live Snowflake, because my trial ended first |
+| `ai/ask.py` (plain-English question to SQL) | Written only. Never run against a live Snowflake, because my trial ended first, and it has no automated tests in this repo |
 | AWS Glue and Athena | Not built. Both bill per use and this is a zero-budget learning project, so I left them out on purpose |
 | RAG chat | Dropped on purpose. The reviews are only 294 distinct one-line comments, so there is nothing to retrieve that a GROUP BY does not already answer |
 
@@ -58,7 +58,9 @@ Real numbers and outputs are in [`docs/RUN_LOG.md`](docs/RUN_LOG.md).
   view costs nothing to store. Marts are queried repeatedly and involve joins,
   so they are materialized once.
 - **Incremental MERGE for the two big facts.** A full rebuild would re-write
-  33M rows every run. The first load and a re-run both pass.
+  33M rows every run. The first load and a re-run both pass. The re-run found
+  no new rows, because the dataset is static, so the incremental path has
+  compiled and run but has never loaded new data.
 - **dbt snapshot for SCD2.** A declarative version of the hash-compare change
   tracking I had hand-written in PySpark for another project.
 - **`TRY_TO_NUMBER` / `TRY_TO_DECIMAL` in staging.** The source is genuinely
@@ -68,8 +70,9 @@ Real numbers and outputs are in [`docs/RUN_LOG.md`](docs/RUN_LOG.md).
   distinct comments. The script scores those 294 once and dbt joins the answers
   back, instead of making 300,000 LLM calls. The LLM must answer in JSON from a
   fixed list of values, so its output becomes clean columns.
-- **Text-to-SQL is guarded.** `ask.py` describes only chosen tables to the
-  model, and runs the generated query only if it is a single SELECT.
+- **Text-to-SQL has a first-layer guard.** `ask.py` runs the generated query
+  only if it is a single SELECT with no write keywords. That is a text check,
+  not a security boundary (see Known limitations).
 
 ## What broke, and what I learned
 
@@ -112,13 +115,35 @@ docs/             Run log with real outputs
 You need an AWS account, a Snowflake account, and a Gemini API key (free tier).
 
 1. Upload the CSVs to S3. Run `snowflake/01` to `03` in Snowsight, following
-   `aws/iam/README.md` for the AWS side.
+   `aws/iam/README.md` for the AWS side. Then create the 7 RAW tables and run
+   `COPY INTO` from the stage. That script was not saved (see Known
+   limitations), so you need to write it from the column lists in
+   `zomato/models/staging/`.
 2. Create a key pair, register the public key on the Snowflake user, and copy
    `zomato/profiles.yml.example` to `~/.dbt/profiles.yml`.
 3. `cd zomato && dbt debug && dbt build`
 4. Set `SNOWFLAKE_ACCOUNT` and `GEMINI_API_KEY` in your shell, then run
    `python ai/enrich_reviews.py`, then `dbt build --select tag:ai`.
 5. For Airflow, follow `airflow/README.md`.
+
+## Known limitations, and what I would do in production
+
+This is a learning project on a static dataset. These are the gaps I know
+about. None of them were fixed in code, because my Snowflake trial has ended
+and untested fixes would be new unverified claims.
+
+| Area | Gap | What production would need |
+|---|---|---|
+| RAW load | The `CREATE TABLE` and `COPY INTO` SQL was not saved | Commit the load script; reject and log malformed rows (`ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE`) |
+| Incremental facts | Filter on `order_timestamp >` misses later updates to old orders and rows sharing the max timestamp | Filter on an `updated_at` or load timestamp, use `>=`, and test with a second batch of real new data |
+| Snapshot | Deleted restaurants are not tracked; no change has ever been captured | `hard_deletes='invalidate'`, then test with changed and deleted rows |
+| `dim_food` | Grain is food x restaurant (1.18M rows), not one row per food | One row per food, plus a separate restaurant-menu bridge table |
+| Access control | `DBT_ROLE` has `GRANT ALL`, including on RAW; `ask.py` uses the same role | Read-only role on RAW for dbt; a separate SELECT-only role on curated views for `ask.py`; masking on email and income; a statement timeout |
+| Orchestration | One dbt task; no retries, alerts or `max_active_runs=1`; the load and LLM steps are run by hand | Retries, failure alerts, single active run, and load -> dbt -> enrich -> dbt as DAG tasks |
+| Tests | 1 relationship test; no freshness or row-count checks; no Python tests | Relationship tests on every foreign key, source freshness, unit tests for `ask.py`, all run in CI |
+| LLM labels | Accuracy never measured | Hand-label a sample and compare; cross-check against star ratings |
+| Environments | One target; every run writes to the same schemas | Separate dev and prod schemas |
+| Dependencies | Versions only in prose | Pinned requirements files |
 
 ## Known issues
 

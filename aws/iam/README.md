@@ -21,7 +21,7 @@ kills access immediately; there is no key to rotate.
 2. **Create the IAM role** with a **placeholder** trust policy —
    [`snowflake-role-trust-policy-initial.json`](snowflake-role-trust-policy-initial.json).
    Attach the policy from step 1. Name it (this project uses
-   `yt-snowflake-s3-role`). Copy the role's ARN.
+   `snowflake-s3-role`). Copy the role's ARN.
 
 3. **Create the Snowflake storage integration** — see
    [`snowflake/02_storage_integration.sql`](../../snowflake/02_storage_integration.sql) —
@@ -47,7 +47,7 @@ kills access immediately; there is no key to rotate.
 ## Common error and fix
 
 ```
-User: arn:aws:sts::<acct>:assumed-role/yt-snowflake-s3-role/snowflake is not
+User: arn:aws:sts::<acct>:assumed-role/snowflake-s3-role/snowflake is not
 authorized to perform: s3:ListBucket on resource: "arn:aws:s3:::<bucket>"
 ```
 
